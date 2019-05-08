@@ -1,0 +1,54 @@
+version: '3'
+services:
+  failover:
+    build: .
+    ports:
+     - "11000:11000"
+    command: ["-addr","0.0.0.0:11000","-masters","ledisdb1:6380"]
+    depends_on:
+      - ledisdb1
+    networks:
+      - local
+  ledisdb1:
+    image: "arrkiin/ledisdb:alpine"
+    ports:
+      - 6380
+    command: >
+      /bin/sh -c 'echo "Starting ..." && \
+          slaveof=$$(curl -s -f failover:11000/master) && \
+          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb1:6380" ]; then echo "I am a slave of $$slaveof"; slaveof="-slaveof $$slaveof"; fi && \
+          ledis-server -addr 0.0.0.0:6380 -rpl $$slaveof'
+    volumes:
+      - ledisdb1:/datastore
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - local
+  ledisdb2:
+    image: "arrkiin/ledisdb:alpine"
+    ports:
+      - 6380
+    command: >
+      /bin/sh -c 'echo "Starting ..." && \
+          slaveof=$$(curl -s -f failover:11000/master) && \
+          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb2:6380" ]; then echo "I am a slave of $$slaveof";  slaveof="-slaveof $$slaveof"; fi && \
+          ledis-server -addr 0.0.0.0:6380 -rpl $$slaveof'
+    volumes:
+      - ledisdb2:/datastore
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - local
+    depends_on:
+      - ledisdb1
+networks:
+  local:
+volumes:
+  ledisdb1:
+  ledisdb2:
