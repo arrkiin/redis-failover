@@ -14,10 +14,11 @@ services:
     ports:
       - 6380
     command: >
-      /bin/sh -c 'echo "Starting ..." && \
-          slaveof=$$(curl -s -f failover:11000/master) && \
-          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb1:6380" ]; then echo "I am a slave of $$slaveof"; slaveof="-slaveof $$slaveof"; fi && \
-          ledis-server -addr 0.0.0.0:6380 -rpl $$slaveof'
+      /bin/sh -c 'sleep "2" && \
+          echo "Starting ..." && \
+          slaveof=$$(curl -s -f --connect-timeout 5 failover:11000/master) && \
+          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb1:6380" ]; then echo "I am a slave of $$slaveof";  slaveof="-slaveof $$slaveof"; else slaveof=""; fi && \
+          ledis-server -config=/config.toml -addr 0.0.0.0:6380 -rpl $$slaveof'
     volumes:
       - ledisdb1:/datastore
     deploy:
@@ -32,10 +33,11 @@ services:
     ports:
       - 6380
     command: >
-      /bin/sh -c 'echo "Starting ..." && \
+      /bin/sh -c 'sleep "4" && \
+          echo "Starting ..." && \
           slaveof=$$(curl -s -f failover:11000/master) && \
-          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb2:6380" ]; then echo "I am a slave of $$slaveof";  slaveof="-slaveof $$slaveof"; fi && \
-          ledis-server -addr 0.0.0.0:6380 -rpl $$slaveof'
+          if [ ! -z "$$slaveof" ] && [ "$$slaveof" != "ledisdb2:6380" ]; then echo "I am a slave of $$slaveof";  slaveof="-slaveof $$slaveof"; else slaveof=""; fi && \
+          ledis-server -config=/config.toml -addr 0.0.0.0:6380 -rpl $$slaveof'
     volumes:
       - ledisdb2:/datastore
     deploy:
