@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/siddontang/redis-failover/failover"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/siddontang/redis-failover/failover"
 )
 
 var configFile = flag.String("config", "", "failover config file")
@@ -28,6 +29,9 @@ var raftClusterState = flag.String("raft_cluster_state", "", "new or existing, i
 
 var zkAddr = flag.String("zk_addr", "", "zookeeper address, seperated by comma")
 var zkPath = flag.String("zk_path", "", "base directory in zk, prefix must be /zk")
+
+var natsAddr = flag.String("nats_addr", "", "nats address")
+var natsSubject = flag.String("nats_subject", "", "nats subject for failover message")
 
 func main() {
 	flag.Parse()
@@ -88,6 +92,14 @@ func main() {
 
 	if len(*zkPath) > 0 {
 		c.Zk.BaseDir = *zkPath
+	}
+
+	if len(*natsAddr) > 0 {
+		c.Nats.Addr = *natsAddr
+	}
+
+	if len(*natsSubject) > 0 {
+		c.Nats.Subject = *natsSubject
 	}
 
 	if len(*broker) > 0 {

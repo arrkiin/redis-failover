@@ -1,8 +1,9 @@
 package failover
 
 import (
-	"github.com/BurntSushi/toml"
 	"io/ioutil"
+
+	"github.com/BurntSushi/toml"
 )
 
 const (
@@ -28,6 +29,11 @@ type ZkConfig struct {
 	BaseDir string   `toml:"base_dir"`
 }
 
+type NatsConfig struct {
+	Addr    string `toml:"addr"`
+	Subject string `toml:"subject"`
+}
+
 type Config struct {
 	Addr          string   `toml:"addr"`
 	Masters       []string `toml:"masters"`
@@ -38,6 +44,7 @@ type Config struct {
 	Broker string     `toml:"broker"`
 	Raft   RaftConfig `toml:"raft"`
 	Zk     ZkConfig   `toml:"zk"`
+	Nats   NatsConfig `toml:"nats"`
 }
 
 func NewConfigWithFile(name string) (*Config, error) {

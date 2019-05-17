@@ -2,12 +2,13 @@ package failover
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
-	"github.com/siddontang/go/log"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/siddontang/go/log"
 )
 
 var (
@@ -24,6 +25,8 @@ type App struct {
 	l net.Listener
 
 	cluster Cluster
+
+	nats *Nats
 
 	masters *masterFSM
 
@@ -61,6 +64,14 @@ func NewApp(c *Config) (*App, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if len(c.Nats.Addr) > 0 && len(c.Nats.Subject) > 0 {
+		a.nats, err = newNats(c.Nats.Addr, c.Nats.Subject)
+		if err != nil {
+			return nil, err
+		}
+		a.AddAfterFailoverHandler(a.nats.SignalFailOver)
 	}
 
 	switch c.Broker {

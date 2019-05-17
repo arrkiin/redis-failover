@@ -46,3 +46,10 @@ addr = ["127.0.0.1:2181"]
 
 # Base directory in zk, prefix must be /zk
 base_dir = "/zk/redis/failover"
+
+[nats]
+# Nats addr
+addr = ["127.0.0.1:4222"]
+
+# Subject for failover propagatoin
+subject = "databaseFailover"
