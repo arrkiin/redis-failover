@@ -4,7 +4,7 @@ FROM golang:1.9-alpine3.6 as builder
 # Setup the Environment
 ENV GOPATH=/root/go \
     PATH=${PATH}:/usr/local/go/bin:/root/go/bin \
-    GOSU_VERSION=1.10
+    GOSU_VERSION=1.11
 
 RUN apk add --no-cache git bash gcc alpine-sdk build-base wget gnupg
 
@@ -16,15 +16,13 @@ RUN mkdir -p /root/dist ${GOPATH} \
     && git clone https://github.com/siddontang/redis-failover \
     && cd redis-failover \
     && go get -d ./... \
-    && go build -i -o /build/bin/redis-failover
+    && GOOS=linux GOARCH=__BUILD_ARCH__ go build -i -a -installsuffix cgo -ldflags="-w -s" -o /build/bin/redis-failover
 
 # grab gosu for easy step-down from root
 # https://github.com/tianon/gosu/releases
 RUN set -ex; \
-    dpkgArch="$(uname -m)"; \
-    if [ "$dpkgArch" == "x86_64" ]; then dpkgArch="amd64"; fi; \
-    wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
-    wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
+    wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-__GOSU_ARCH__"; \
+    wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-__GOSU_ARCH__.asc"; \
     export GNUPGHOME="$(mktemp -d)"; \
     gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
     gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
@@ -32,7 +30,7 @@ RUN set -ex; \
 
 
 # done building - now create a tiny image with a statically linked Ledis
-FROM alpine:3.6
+FROM __BASEIMAGE_ARCH__/alpine:3.6
 
 # Setup the Environment
 ENV GOPATH=/root/go \
