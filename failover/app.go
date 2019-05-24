@@ -39,6 +39,8 @@ type App struct {
 	hMutex         sync.Mutex
 	beforeHandlers []BeforeFailoverHandler
 	afterHandlers  []AfterFailoverHandler
+
+	httpMutex sync.Mutex
 }
 
 func NewApp(c *Config) (*App, error) {
