@@ -2,8 +2,10 @@ package failover
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -261,7 +263,22 @@ func (a *App) startHTTP() {
 	s.Serve(a.l)
 }
 
+func getMasterIP(addr string) string {
+	cmp := strings.Split(addr, ":")
+	as, err := net.LookupIP(cmp[0])
+	if err == nil {
+		return fmt.Sprintf("%s:%s", as[len(as)-1], cmp[1])
+	}
+
+	return addr
+}
+
 func (a *App) addMasters(addrs []string) error {
+	// Set IP for Hostname
+	for i, g := range addrs {
+		addrs[i] = getMasterIP(g)
+	}
+
 	if len(addrs) == 0 {
 		return nil
 	}
@@ -297,6 +314,11 @@ func (a *App) delMasters(addrs []string) error {
 }
 
 func (a *App) setMasters(addrs []string) error {
+	// Set IP for Hostname
+	for i, g := range addrs {
+		addrs[i] = getMasterIP(g)
+	}
+
 	if a.cluster != nil {
 		if a.cluster.IsLeader() {
 			return a.cluster.SetMasters(addrs, 10*time.Second)

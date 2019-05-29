@@ -9,9 +9,8 @@ fi
 
 # allow the container to be started with `--user`
 if [ "$1" = 'redis-failover' -a "$(id -u)" = '0' ]; then
-	chown -R ledis /datastore
     chown ledis:ledis /bin/redis-*
-	exec gosu ledis "$0" "$@"
+	exec su-exec ledis "$0" "$@"
 fi
 
 exec "$@"
